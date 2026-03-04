@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-02-18T17:37:17.376114",
+  "min_dimensions": "1024x728",
+  "summary": {
+    "total_processed": 3242,
+    "valid_images": 3242,
+    "corrupted_count": 0,
+    "too_small_count": 0,
+    "unsupported_format_count": 0
+  },
+  "categories": {
+    "Benign": {
+      "valid": 512,
+      "corrupted": 0,
+      "too_small": 0,
+      "unsupported_format": 0,
+      "total": 512
+    },
+    "[Malignant] early Pre-B": {
+      "valid": 979,
+      "corrupted": 0,
+      "too_small": 0,
+      "unsupported_format": 0,
+      "total": 979
+    },
+    "[Malignant] Pre-B": {
+      "valid": 955,
+      "corrupted": 0,
+      "too_small": 0,
+      "unsupported_format": 0,
+      "total": 955
+    },
+    "[Malignant] Pro-B": {
+      "valid": 796,
+      "corrupted": 0,
+      "too_small": 0,
+      "unsupported_format": 0,
+      "total": 796
+    }
+  },
+  "invalid_files": {
+    "corrupted": [],
+    "too_small": [],
+    "unsupported_format": []
+  }
+}

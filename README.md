@@ -1,0 +1,14 @@
+## Redimensionalidad de las imagenes (Probablementee 128*128)
+## Balancear Clases (Clase con menos cantidad de imagenes identificada Cancer benigno)
+
+## Opciones de encoding cuantico.
+
+- Angle Encoding o Phase Encoding FOCO
+- Amplitude Encoding FOCO
+- Data Re-uploading
+
+
+
+## STANDARIZACION DE IMAGENES
+- Pasar todo a escala de grises
+- Realizar un histograma para ver 
