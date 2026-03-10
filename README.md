@@ -3,9 +3,10 @@
 
 ## Opciones de encoding cuantico.
 
-- Angle Encoding o Phase Encoding FOCO
-- Amplitude Encoding FOCO
+- Angle Encoding o Phase Encoding FOCO Jose Miguel Burgos
+- Amplitude Encoding FOCO 
 - Data Re-uploading
+- 
 
 
 
