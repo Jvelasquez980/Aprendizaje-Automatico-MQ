@@ -2,3 +2,7 @@ __pycache__
 data
 data_equalized
 data_grayscale
+histories
+models
+processed_data
+tfrecords
