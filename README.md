@@ -13,3 +13,7 @@
 ## STANDARIZACION DE IMAGENES
 - Pasar todo a escala de grises
 - Realizar un histograma para ver 
+
+
+
+## Que circuito variacional se puede construir con qiskit, 

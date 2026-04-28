@@ -6,3 +6,6 @@ histories
 models
 processed_data
 tfrecords
+.venv
+decoded_images_train
+quantum_encoded_data
