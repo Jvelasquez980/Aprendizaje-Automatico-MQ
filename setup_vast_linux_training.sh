@@ -5,16 +5,19 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="${ROOT_DIR}/.venv"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 MODE="gpu"
+PROFILE="quantum"
 SKIP_VERIFY=0
 
 usage() {
   cat <<'EOF'
 Uso:
-  bash setup_vast_linux_training.sh [--gpu|--cpu] [--venv-dir PATH] [--python BIN] [--skip-verify]
+  bash setup_vast_linux_training.sh [--gpu|--cpu] [--quantum|--classical] [--venv-dir PATH] [--python BIN] [--skip-verify]
 
 Opciones:
   --gpu            Configura el entorno para entrenamiento con GPU en Vast.ai.
   --cpu            Configura el entorno solo para CPU.
+  --quantum        Instala el entorno cuantico (por defecto).
+  --classical      Instala el entorno clasico con TensorFlow.
   --venv-dir PATH  Ruta alternativa para el entorno virtual.
   --python BIN     Binario de Python a usar. Por defecto: python3
   --skip-verify    Omite la verificacion final de imports y versiones.
@@ -30,6 +33,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --cpu)
       MODE="cpu"
+      shift
+      ;;
+    --quantum)
+      PROFILE="quantum"
+      shift
+      ;;
+    --classical)
+      PROFILE="classical"
       shift
       ;;
     --venv-dir)
@@ -72,6 +83,12 @@ log "Verificando herramientas base"
 require_command "$PYTHON_BIN"
 require_command git
 
+REQ_FILE="${ROOT_DIR}/requirements-${PROFILE}.txt"
+if [[ ! -f "$REQ_FILE" ]]; then
+  echo "No se encontro el archivo de dependencias: $REQ_FILE" >&2
+  exit 1
+fi
+
 if [[ "$MODE" == "gpu" ]]; then
   require_command nvidia-smi
   log "GPU detectada"
@@ -92,10 +109,10 @@ fi
 log "Actualizando pip/setuptools/wheel"
 python -m pip install --upgrade pip setuptools wheel
 
-log "Instalando dependencias del proyecto"
-python -m pip install -r "${ROOT_DIR}/requierements.txt"
+log "Instalando dependencias del perfil ${PROFILE}"
+python -m pip install -r "$REQ_FILE"
 
-if [[ "$MODE" == "gpu" ]]; then
+if [[ "$MODE" == "gpu" && "$PROFILE" == "quantum" ]]; then
   log "Reemplazando qiskit-aer por la variante con soporte GPU"
   python -m pip uninstall -y qiskit-aer || true
   python -m pip install "qiskit-aer-gpu==0.17.2"
@@ -109,9 +126,10 @@ mkdir -p \
   "${ROOT_DIR}/artifacts/blood_cell_cancer_quantum"
 
 if [[ "$SKIP_VERIFY" -eq 0 ]]; then
-  log "Verificando imports y backend de Qiskit Aer"
-  python <<'PY'
+  log "Verificando imports del perfil ${PROFILE}"
+  PROFILE_ENV="$PROFILE" python <<'PY'
 import json
+import os
 import sys
 
 checks = {}
@@ -128,39 +146,42 @@ try:
 except Exception as exc:
     checks["pandas"] = f"ERROR: {exc}"
 
-try:
-    import tensorflow as tf
-    checks["tensorflow"] = tf.__version__
-except Exception as exc:
-    checks["tensorflow"] = f"ERROR: {exc}"
+profile = os.environ["PROFILE_ENV"]
 
-try:
-    import qiskit
-    checks["qiskit"] = qiskit.__version__
-except Exception as exc:
-    checks["qiskit"] = f"ERROR: {exc}"
+if profile == "classical":
+    try:
+        import tensorflow as tf
+        checks["tensorflow"] = tf.__version__
+    except Exception as exc:
+        checks["tensorflow"] = f"ERROR: {exc}"
+else:
+    try:
+        import qiskit
+        checks["qiskit"] = qiskit.__version__
+    except Exception as exc:
+        checks["qiskit"] = f"ERROR: {exc}"
 
-try:
-    import qiskit_machine_learning
-    checks["qiskit_machine_learning"] = qiskit_machine_learning.__version__
-except Exception as exc:
-    checks["qiskit_machine_learning"] = f"ERROR: {exc}"
+    try:
+        import qiskit_machine_learning
+        checks["qiskit_machine_learning"] = qiskit_machine_learning.__version__
+    except Exception as exc:
+        checks["qiskit_machine_learning"] = f"ERROR: {exc}"
 
-try:
-    import qiskit_algorithms
-    checks["qiskit_algorithms"] = qiskit_algorithms.__version__
-except Exception as exc:
-    checks["qiskit_algorithms"] = f"ERROR: {exc}"
+    try:
+        import qiskit_algorithms
+        checks["qiskit_algorithms"] = qiskit_algorithms.__version__
+    except Exception as exc:
+        checks["qiskit_algorithms"] = f"ERROR: {exc}"
 
-try:
-    from qiskit_aer import AerSimulator
-    backend = AerSimulator()
-    checks["qiskit_aer"] = {
-        "devices": list(backend.available_devices()),
-        "methods": list(backend.available_methods()),
-    }
-except Exception as exc:
-    checks["qiskit_aer"] = f"ERROR: {exc}"
+    try:
+        from qiskit_aer import AerSimulator
+        backend = AerSimulator()
+        checks["qiskit_aer"] = {
+            "devices": list(backend.available_devices()),
+            "methods": list(backend.available_methods()),
+        }
+    except Exception as exc:
+        checks["qiskit_aer"] = f"ERROR: {exc}"
 
 print(json.dumps(checks, indent=2))
 
@@ -177,8 +198,16 @@ Entorno virtual:
   source "${VENV_DIR}/bin/activate"
 
 Ejemplos de uso posteriores:
+$( if [[ "$PROFILE" == "classical" ]]; then
+     cat <<'CMDS'
   python prepare_blood_cell_cancer_data.py --raw-dir "Blood cell Cancer [ALL]"
+  python train_blood_cell_cancer_vgg16.py --prepared-dir artifacts/blood_cell_cancer_prepared
+CMDS
+   else
+     cat <<CMDS
   python encode_blood_cell_cancer_amplitude.py --prepared-dir artifacts/blood_cell_cancer_prepared
   python train_blood_cell_cancer_vqc_aer_gpu.py --data-dir artifacts/blood_cell_cancer_quantum/amplitude_encoding --representation masks --num-qubits 16 --device $( [[ "$MODE" == "gpu" ]] && echo GPU || echo CPU ) --precision single
+CMDS
+   fi )
 
 EOF
